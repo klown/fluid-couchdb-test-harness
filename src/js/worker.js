@@ -95,6 +95,69 @@ fluid.defaults("fluid.test.couchdb.worker.couch", {
     }
 });
 
+fluid.defaults("fluid.test.cockroachdb.worker.base", {
+    gradeNames: ["fluid.component", "fluid.contextAware"],
+    setupCheckInterval: 250,
+    setupTimeout: 30000,
+    hostname: "localhost",
+    port: 26257,
+    username: "maxroach",
+    password: "",   // running in insecure mode
+    baseUrl: {
+        expander: {
+            funcName: "fluid.stringTemplate",
+            args: ["{that}.options.templates.baseUrl", { hostname: "{that}.options.hostname", port: "{that}.options.port", username: "{that}.options.username", password: "{that}.options.password"}]
+        }
+    },
+    templates: {
+        baseUrl: "postgres://%username:%password@%hostname:%port"
+    },
+    events: {
+        combinedShutdown:   null,
+        combinedStartup:    null,
+        onShutdownComplete: null,
+        onStartupComplete:  null
+    },
+    invokers: {
+        shutdown: {
+            funcName: "fluid.promise.fireTransformEvent",
+            args:     ["{that}.events.combinedShutdown"]
+        },
+        startup: {
+            funcName: "fluid.promise.fireTransformEvent",
+            args:     ["{that}.events.combinedStartup"]
+        },
+        isUp: {
+            funcName: "fluid.notImplemented"
+        },
+        isReady: {
+            funcName: "fluid.test.couchdb.checkUrlRepeatedly",
+            args:     ["{that}.options"]
+        }
+    }
+});
+
+fluid.defaults("fluid.test.cockroachdb.worker.cockroach", {
+    gradeNames: ["fluid.test.cockroachdb.worker.base", "fluid.contextAware"],
+    port: 25984,
+    allDbsSql: "SELECT datname FROM pg_database;",
+    contextAwareness: {
+        whichWorker: {
+            defaultGradeNames: "fluid.test.cockroachdb.worker.docker",
+            checks: {
+                useVagrant: {
+                    contextValue: "{fluid.test.cockroachdb.useVagrant}",
+                    gradeNames: "fluid.test.cockroachdb.worker.vagrant"
+                },
+                useExternal: {
+                    contextValue: "{fluid.test.cockroachdb.useExternal}",
+                    gradeNames: "fluid.test.cockroachdb.worker.external"
+                }
+            }
+        }
+    }
+});
+
 fluid.defaults("fluid.test.couchdb.worker.lucene", {
     gradeNames: ["fluid.test.couchdb.worker.base", "fluid.contextAware"],
     port: 25985,

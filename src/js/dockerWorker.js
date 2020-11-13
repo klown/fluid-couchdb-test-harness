@@ -180,3 +180,72 @@ fluid.defaults("fluid.test.couchdb.lucene.worker.docker", {
         createContainer: "docker run -d -l %options.containerLabel -p %options.port:5985 --link %couchContainerName:couchdb --name %containerName klaemo/couchdb-lucene:2.1.0"
     }
 });
+
+fluid.defaults("fluid.test.cockroachdb.worker.docker", {
+    gradeNames: ["fluid.component"],
+    containerLabel: "fluid-cockroachdb-test-harness",
+    members: {
+        containerName: {
+            expander: {
+                funcName: "fluid.stringTemplate",
+                args:     ["fluid-cockroachdb-test-harness-%id", { id: "{that}.id" }]
+            }
+        }
+    },
+    cockroachVersion: "20.1.7",
+    cockroachUsername: "maxroach",
+    cockroachPassword: "",
+    commandTemplates: {
+        listContainers:  "docker ps -a --filter label=%options.containerLabel --format '{{ json . }}'",
+        createContainer: "./scripts/startDockerInsecureCluster.sh %options.containerLabel %options.port %options.adminPort --name %containerName %option.cockroachUsername cockroachdb/cockroach:v%options.cockroachVersion",
+        startContainer:  "docker start %containerId",
+        removeContainer: "docker rm -f %containerId",
+        stopContainer:   "./scripts/stopDockerInsecureCluster.sh %option.containerName"
+    },
+    invokers: {
+        isUp: {
+            funcName: "fluid.test.couchdb.worker.docker.isContainerUp",
+            args:     ["{that}"]
+        },
+        listContainers: {
+            funcName: "fluid.test.couchdb.runCommandAsPromise",
+            args: [
+                "{that}.options.commandTemplates.listContainers",
+                "{that}",
+                "Retrieving list of docker containers."
+            ]
+        }
+    },
+    listeners: {
+        "combinedShutdown.listContainers": {
+            priority: "first",
+            func:     "{that}.listContainers"
+        },
+        "combinedShutdown.stopOrRemoveContainers": {
+            priority: "after:listContainers",
+            funcName: "fluid.test.couchdb.worker.docker.stopOrRemoveContainers",
+            args:     ["{that}", "{arguments}.0"] // listContainerOutput
+        },
+        "combinedShutdown.fireEvent": {
+            func: "{that}.events.onShutdownComplete.fire"
+        },
+        "combinedStartup.log": {
+            priority: "first",
+            funcName: "fluid.log",
+            args:     ["Running using 'docker' worker."]
+        },
+        "combinedStartup.isUp": {
+            priority: "after:log",
+            func:     "{that}.isUp"
+        },
+        "combinedStartup.startIfNeeded": {
+            priority: "after:isUp",
+            funcName: "fluid.test.couchdb.worker.docker.startIfNeeded",
+            args:     ["{that}", "{arguments}.0"] // isUp
+        },
+        "combinedStartup.fireEvent": {
+            priority: "last",
+            func: "{that}.events.onStartupComplete.fire"
+        }
+    }
+});

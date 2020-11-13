@@ -18,3 +18,10 @@ fluid.test.couchdb.harness.config = {
         nodata:           {}
     }
 };
+
+fluid.registerNamespace("fluid.test.cockroachdb.harness.config");
+
+fluid.test.cockroachdb.harness.config = {
+    tableModelDefs: "%fluid-couchdb-test-harness/tests/data/tableModels",
+    databases: fluid.test.couchdb.harness.config.databases
+};

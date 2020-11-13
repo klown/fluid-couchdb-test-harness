@@ -11,11 +11,19 @@
         "url": "git+https://github.com/fluid-project/fluid-couchdb-test-harness.git"
     },
     "author": "Tony Atkins <tony@raisingthefloor.org>",
+    "contributors": [
+        "Tony Atkins <tony@raisingthefloor.org>",
+        "Joseph Scheuhammer <clown@alum.mit.edu"
+    ],
     "license": "BSD-3-Clause",
     "homepage": "https://github.com/fluid-project/fluid-couchdb-test-harness#readme",
     "dependencies": {
         "infusion": "3.0.0-dev.20200326T173810Z.24ddb2718",
-        "request": "2.88.2"
+        "pg": "^8.4.2",
+        "pg-format": "^1.0.4",
+        "request": "2.88.2",
+        "sequelize": "^6.3.5",
+        "sequelize-cockroachdb": "^1.1.0"
     },
     "devDependencies": {
         "eslint": "7.5.0",
